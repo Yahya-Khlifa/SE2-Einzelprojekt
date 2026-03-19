@@ -26,5 +26,13 @@ class GameResultService {
      * }
      */
     fun deleteGameResult(id: Long) = gameResults.removeIf { it.id == id }
+    // In der Datei GameResultService.kt
+    fun getLeaderboard(): List<GameResult> {
+        return gameResults.sortedWith(
+            compareByDescending<GameResult> { it.score } // Höchster Score (z.B. 100 vor 80)
+                .thenBy { it.timeInSeconds}                 // Bei 100 vs 100: 30 Sek vor 45 Sek
+        )
+    }
+
 
 }

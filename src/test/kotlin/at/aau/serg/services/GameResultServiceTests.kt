@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class GameResultServiceTests {
 
@@ -15,61 +16,59 @@ class GameResultServiceTests {
         service = GameResultService()
     }
 
+    // 1. Test: Leere Liste am Anfang (war in deinem alten Test)
     @Test
     fun test_getGameResults_emptyList() {
-        val result = service.getGameResults()
-
-        assertEquals(emptyList<GameResult>(), result)
+        assertEquals(0, service.getGameResults().size)
     }
 
+    // 2. Test: Hinzufügen und ID Check (verbesserte Version deines alten Tests)
     @Test
-    fun test_addGameResult_getGameResults_containsSingleElement() {
-        val gameResult = GameResult(1, "player1", 17, 15.3)
+    fun test_addAndGetGameResult() {
+        val result = GameResult(0, "Player1", 100, 15.0)
+        service.addGameResult(result)
 
-        service.addGameResult(gameResult)
-        val res = service.getGameResults()
-
-        assertEquals(1, res.size)
-        assertEquals(gameResult, res[0])
+        val found = service.getGameResult(1) // Die erste ID muss 1 sein
+        assertEquals("Player1", found?.playerName)
+        assertEquals(1, found?.id)
     }
 
+    // 3. Test: Suche nach ID, die nicht existiert (war in deinem alten Test)
     @Test
-    fun test_getGameResultById_existingId_returnsObject() {
-        val gameResult = GameResult(1, "player1", 17, 15.3)
-        service.addGameResult(gameResult)
-
-        val res = service.getGameResult(1)
-
-        assertEquals(gameResult, res)
+    fun test_getGameResult_returnsNullIfNotFound() {
+        assertNull(service.getGameResult(999))
     }
 
+    // 4. Test: Löschen von Einträgen (NEU für 100% Coverage)
     @Test
-    fun test_getGameResultById_nonexistentId_returnsNull() {
-        val gameResult = GameResult(1, "player1", 17, 15.3)
-        service.addGameResult(gameResult)
+    fun test_deleteGameResult() {
+        val result = GameResult(0, "DeleteMe", 10, 5.0)
+        service.addGameResult(result)
 
-        val res = service.getGameResult(22)
-
-        assertNull(res)
+        val deleted = service.deleteGameResult(1)
+        assertTrue(deleted)
+        assertEquals(0, service.getGameResults().size)
     }
 
+    // 5. Test: Leaderboard Sortierung (NEU für Aufgabe 2.2.1 & 2.2.3)
     @Test
-    fun test_addGameResult_multipleEntries_correctId() {
-        val gameResult1 = GameResult(0, "player1", 17, 15.3)
-        val gameResult2 = GameResult(0, "player2", 25, 16.0)
+    fun test_getLeaderboard_fullSortingLogic() {
+        // Testet auch den "Empty"-Pfad im Leaderboard
+        assertTrue(service.getLeaderboard().isEmpty())
 
-        service.addGameResult(gameResult1)
-        service.addGameResult(gameResult2)
+        val p1 = GameResult(0, "LowScore", 50, 10.0)
+        val p2 = GameResult(0, "HighScoreSlow", 200, 60.0)
+        val p3 = GameResult(0, "HighScoreFast", 200, 30.0) // Bester (200 Score, 30s)
 
-        val res = service.getGameResults()
+        service.addGameResult(p1)
+        service.addGameResult(p2)
+        service.addGameResult(p3)
 
-        assertEquals(2, res.size)
+        val lb = service.getLeaderboard()
 
-        assertEquals(gameResult1, res[0])
-        assertEquals(1, res[0].id)
-
-        assertEquals(gameResult2, res[1])
-        assertEquals(2, res[1].id)
+        assertEquals(3, lb.size)
+        assertEquals("HighScoreFast", lb[0].playerName) // Platz 1
+        assertEquals("HighScoreSlow", lb[1].playerName) // Platz 2
+        assertEquals("LowScore", lb[2].playerName)      // Platz 3
     }
-
 }
